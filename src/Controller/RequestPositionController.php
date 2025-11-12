@@ -54,14 +54,18 @@ final class RequestPositionController extends AbstractController
     }
 
 
+    /**
+     * Получает список позиций заявок на закупку
+     */
     #[Route('/request/position/filter_pagin', methods: ['GET'], name: 'request_position_filter_pagin', format: 'json')]
     public function getRequestsByFilterPagination(
         #[MapQueryString] RequestFilter $filter, 
+        #[MapQueryString] PageRequest $pageRequest, 
         RequestPositionRepository $repository): JsonResponse
     {
-        $requests = $repository->findAllByFilterPagination($filter, new PageRequest(1, 10));
+        $data = $repository->findAllByFilterPagination($filter, $pageRequest);
 
-        return $this->json($requests);
+        return $this->json($data);
     }
 
 

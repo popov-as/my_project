@@ -61,7 +61,8 @@ class RequestPositionRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return PageResult<RequestPosition> Returns an array of Product objects
+     * Получает список позиций заявок на закупку
+     * @return PageResult<RequestPosition> 
      */
     public function findAllByFilterPagination(RequestFilter $filter, PageRequest $pageRequest): PageResult
     {
@@ -70,7 +71,6 @@ class RequestPositionRepository extends ServiceEntityRepository
         $qb->select('p.id', 'r.code as requestCode', 'r.name as requestName', 'p.name', 'p.quantity', 'p.price')
             ->from(RequestPosition::class, 'p')
             ->innerJoin(Request::class, 'r', Join::WITH, 'p.requestId = r.id')
-            //->orderBy('p.id', 'ASC')
         ;
 
         if (isset($filter->name)) {
@@ -88,29 +88,6 @@ class RequestPositionRepository extends ServiceEntityRepository
             ->setParameter('priceTo', $filter->getPriceTo());
         }
 
-        
-        // // Количество строк на странице
-        // $pageSize = 10;
-
-        // // Создаем doctrine Paginator
-        // //$paginator = new Paginator($qb, fetchJoinCollection: false);
-
-        // // Всего строк
-        // $totalItems = $qb->select('count(p)')->getQuery()->getResult(AbstractQuery::HYDRATE_SINGLE_SCALAR);
-
-        // $qb->select('p.id', 'r.code as requestCode', 'r.name as requestName', 'p.name', 'p.quantity', 'p.price');
-
-        // // Всего страниц
-        // $pagesCount = ceil($totalItems / $pageSize);
-
-        // // Выбираем строки для текущей страницы
-        // $qb
-        //     ->setFirstResult($pageSize * ($page-1)) // Устанавливаем смещение для текущей страницы
-        //     ->setMaxResults($pageSize); // Количество строк на странице
-        //
-        // new PageResult($qb->getQuery()->getResult(), $page, $pageSize, $totalItems, $pagesCount);
-
-        
         // TODO Добавить сортировку в качестве параметра
         $paginator = new DataPaginator($qb, $pageRequest);
         return $paginator->getPageResult();

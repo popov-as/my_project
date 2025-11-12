@@ -24,6 +24,7 @@ class DataPaginator
 
         // Выбираем строки для текущей страницы
         $data = $this->qb
+            ->orderBy('p.id', 'ASC')
             ->setFirstResult($pageSize * ($page-1))  // Смещение для текущей страницы
             ->setMaxResults($pageSize)                // Количество строк на странице
             ->getQuery()
@@ -32,6 +33,7 @@ class DataPaginator
         // Всего строк
         $totalItems = $this->qb
             ->select('count(p)')
+            ->resetDQLPart('orderBy')
             ->setFirstResult(null)
             ->setMaxResults(null)
             ->getQuery()
