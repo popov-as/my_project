@@ -7,11 +7,9 @@ use App\Model\PageRequest;
 use App\Filter\RequestFilter;
 use App\Repository\RequestPositionRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
-use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -26,38 +24,10 @@ final class RequestPositionController extends AbstractController
     }
 
 
-    #[Route('/request/position/filter', methods: ['GET'], name: 'request_position_filter', format: 'json')]
-    public function getRequestsByFilter(
-        #[MapQueryParameter] string $code, 
-        #[MapQueryParameter] string $name, 
-        EntityManagerInterface $entityManager): JsonResponse
-    {
-        $requests = $entityManager->getRepository(RequestPosition::class)->findBy([
-            'code' => $code,
-            'name' => $name,
-        ]);
-
-        return $this->json($requests);
-    }
-
-
-    #[Route('/request/position/filter2', methods: ['GET'], name: 'request_position_filter2', format: 'json')]
-    public function getRequestsByFilter2(
-        #[MapQueryString] RequestFilter $filter, 
-        EntityManagerInterface $entityManager,
-        RequestPositionRepository $repository, 
-        LoggerInterface $logger): JsonResponse
-    {
-        $requests = $repository->findAllByFilter($entityManager, $filter, $logger);
-
-        return $this->json($requests);
-    }
-
-
     /**
-     * Получает список позиций заявок на закупку
+     * Получает список позиций заявок на закупку (с фильтрацией, паджинацией и сортировкой)
      */
-    #[Route('/request/position/filter_pagin', methods: ['GET'], name: 'request_position_filter_pagin', format: 'json')]
+    #[Route('/request/position/filter', methods: ['GET'], name: 'request_position_filter', format: 'json')]
     public function getRequestsByFilterPagination(
         #[MapQueryString] RequestFilter $filter, 
         #[MapQueryString] PageRequest $pageRequest, 

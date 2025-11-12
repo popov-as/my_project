@@ -8,12 +8,9 @@ use App\Model\PageRequest;
 use App\Model\PageResult;
 use App\Filter\RequestFilter;
 use App\Service\DataPaginator;
-use Psr\Log\LoggerInterface;
-use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * @extends ServiceEntityRepository<RequestPosition>
@@ -25,40 +22,6 @@ class RequestPositionRepository extends ServiceEntityRepository
         parent::__construct($registry, RequestPosition::class);
     }
 
-    /**
-     * @return RequestPosition[] Returns an array of Product objects
-     */
-    public function findAllByFilter(EntityManagerInterface $entityManager, RequestFilter $filter, LoggerInterface $logger): array
-    {
-        $qb = $entityManager->createQueryBuilder();
-
-        $qb->select('p.id', 'r.code as requestCode', 'r.name as requestName', 'p.name', 'p.quantity', 'p.price')
-            ->from(RequestPosition::class, 'p')
-            ->innerJoin(Request::class, 'r', Join::WITH, 'p.requestId = r.id')
-            ->orderBy('p.id', 'ASC')
-            //->setMaxResults(10)
-        ;
-
-        //$logger->info('---TEST---');
-        //$logger->info($qb->getQuery());
-
-        if (isset($filter->name)) {
-            $qb->andWhere('p.name like :name')
-            ->setParameter('name', '%'.$filter->getName().'%');
-        }
-
-        if (isset($filter->priceFrom)) {
-            $qb->andWhere('p.price >= :priceFrom')
-            ->setParameter('priceFrom', $filter->getPriceFrom());
-        }
-
-        if (isset($filter->priceTo)) {
-            $qb->andWhere('p.price <= :priceTo')
-            ->setParameter('priceTo', $filter->getPriceTo());
-        }
-
-        return $qb->getQuery()->getResult();
-    }
 
     /**
      * Получает список позиций заявок на закупку
@@ -88,7 +51,7 @@ class RequestPositionRepository extends ServiceEntityRepository
             ->setParameter('priceTo', $filter->getPriceTo());
         }
 
-        // TODO Добавить сортировку в качестве параметра
+        // TODO Сделать, чтобы конструктор сразу возвращал нужный объект (без вызова getPageResult())
         $paginator = new DataPaginator($qb, $pageRequest);
         return $paginator->getPageResult();
     }
