@@ -27,25 +27,25 @@ class RequestRepository extends ServiceEntityRepository
     {
         // автоматически знает, что надо выбирать Заявки на закупку
         // "p" - это псевдоним, который вы будете использовать до конца запроса
-        $qb = $this->createQueryBuilder('p');
+        $qb = $this->createQueryBuilder('r');
 
         if (isset($filter->code)) {
-            $qb->andWhere('p.code like :code')
+            $qb->andWhere('r.code like :code')
             ->setParameter('code', '%'.$filter->getCode().'%');
         }
 
         if (isset($filter->name)) {
-            $qb->andWhere('p.name like :name')
+            $qb->andWhere('r.name like :name')
             ->setParameter('name', '%'.$filter->getName().'%');
         }
 
         if (isset($filter->priceFrom)) {
-            $qb->andWhere('p.price >= :priceFrom')
+            $qb->andWhere('r.price >= :priceFrom')
             ->setParameter('priceFrom', $filter->getPriceFrom());
         }
 
         if (isset($filter->priceTo)) {
-            $qb->andWhere('p.price <= :priceTo')
+            $qb->andWhere('r.price <= :priceTo')
             ->setParameter('priceTo', $filter->getPriceTo());
         }
 

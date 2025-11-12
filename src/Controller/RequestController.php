@@ -34,7 +34,7 @@ final class RequestController extends AbstractController
 
 
     #[Route('/request/filter', methods: ['GET'], name: 'request_filter', format: 'json')]
-    public function getRequestsByFilter2(
+    public function getRequestsByFilter(
         #[MapQueryString] RequestFilter $filter, 
         #[MapQueryString] PageRequest $pageRequest, 
         RequestRepository $repository): JsonResponse
