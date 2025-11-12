@@ -3,7 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\Request;
+use App\Model\PageRequest;
+use App\Model\PageResult;
 use App\Filter\RequestFilter;
+use App\Service\DataPaginator;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -18,16 +21,13 @@ class RequestRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return Request[] Возвращает список заявок на закупку с учетом фильтра
+     * @return PageResult<Request> Возвращает список заявок на закупку (с учетом фильтра, паджинации и сортировки)
      */
-    public function findAllByFilter(RequestFilter $filter): array
+    public function findAllByFilter(RequestFilter $filter, PageRequest $pageRequest): PageResult
     {
         // автоматически знает, что надо выбирать Заявки на закупку
         // "p" - это псевдоним, который вы будете использовать до конца запроса
-        $qb = $this->createQueryBuilder('p')
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-        ;
+        $qb = $this->createQueryBuilder('p');
 
         if (isset($filter->code)) {
             $qb->andWhere('p.code like :code')
@@ -49,7 +49,9 @@ class RequestRepository extends ServiceEntityRepository
             ->setParameter('priceTo', $filter->getPriceTo());
         }
 
-        return $qb->getQuery()->getResult();
+        // TODO Сделать, чтобы конструктор сразу возвращал нужный объект (без вызова getPageResult())
+        $paginator = new DataPaginator($qb, $pageRequest);
+        return $paginator->getPageResult();
     }
 
 

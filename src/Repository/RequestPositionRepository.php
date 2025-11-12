@@ -24,10 +24,10 @@ class RequestPositionRepository extends ServiceEntityRepository
 
 
     /**
-     * Получает список позиций заявок на закупку
+     * Получает список позиций заявок на закупку (с учетом фильтра, паджинации и сортировки)
      * @return PageResult<RequestPosition> 
      */
-    public function findAllByFilterPagination(RequestFilter $filter, PageRequest $pageRequest): PageResult
+    public function findAllByFilter(RequestFilter $filter, PageRequest $pageRequest): PageResult
     {
         $qb =  $this->getEntityManager()->createQueryBuilder();
 

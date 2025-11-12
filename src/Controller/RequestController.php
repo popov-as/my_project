@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Request;
+use App\Model\PageRequest;
 use App\Filter\RequestFilter;
 use App\Repository\RequestRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -10,7 +11,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
-use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -34,28 +34,14 @@ final class RequestController extends AbstractController
 
 
     #[Route('/request/filter', methods: ['GET'], name: 'request_filter', format: 'json')]
-    public function getRequestsByFilter(
-        #[MapQueryParameter] string $code, 
-        #[MapQueryParameter] string $name, 
-        EntityManagerInterface $entityManager): JsonResponse
-    {
-        $requests = $entityManager->getRepository(Request::class)->findBy([
-            'code' => $code,
-            'name' => $name,
-        ]);
-
-        return $this->json($requests);
-    }
-
-
-    #[Route('/request/filter2', methods: ['GET'], name: 'request_filter2', format: 'json')]
     public function getRequestsByFilter2(
         #[MapQueryString] RequestFilter $filter, 
+        #[MapQueryString] PageRequest $pageRequest, 
         RequestRepository $repository): JsonResponse
     {
-        $requests = $repository->findAllByFilter($filter);
+        $data = $repository->findAllByFilter($filter, $pageRequest);
 
-        return $this->json($requests);
+        return $this->json($data);
     }
 
 
