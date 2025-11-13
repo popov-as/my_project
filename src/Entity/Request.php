@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\RequestRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 use DateTime;
 
 #[ORM\Entity(repositoryClass: RequestRepository::class)]
@@ -19,15 +20,19 @@ class Request
     private ?string $code = null;
 
     #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: 'Наименование должно быть задано')]
     private ?string $name = null;
 
     #[ORM\Column]
+    #[Assert\GreaterThan('today', message: 'Дата должна быть больше текущей')]
     private ?DateTime $statusDate = null;
 
     #[ORM\Column]
+    #[Assert\Positive(message: 'Цена должна быть больше нуля')]
     private ?float $price = null;
 
     #[ORM\Column]
+    #[Assert\Positive(message: 'Количество должно быть больше нуля')]
     private ?int $quantity = null;
 
     public function getId(): ?int
