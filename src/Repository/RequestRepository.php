@@ -8,7 +8,10 @@ use App\Model\PageResult;
 use App\Filter\RequestFilter;
 use App\Service\DataPaginator;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Types\BlobType;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\File\File;
+
 
 /**
  * @extends ServiceEntityRepository<Request>
@@ -56,15 +59,61 @@ class RequestRepository extends ServiceEntityRepository
 
 
     /**
-     * @return Request Возвращает заявку на закупку по коду (просто ради упражнения)
+     * Возвращает заявку на закупку по id (все поля кроме файла, чтобы быстро работало)
      */
-    public function findOneByCode($code): ?Request
+    public function findById($id): ?Request
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.code = :val')
-            ->setParameter('code', $code)
+        // Во фразе select нельзя исключить одно поле из сущности. 
+        // Можно только явно перечислить все поля кроме одного
+        $fields = $this->createQueryBuilder('p')
+            ->select('p.id', 'p.code', 'p.name', 'p.statusDate', 'p.price', 'p.quantity', 'p.ftFile', 'p.fnFile')
+            ->andWhere('p.id = :id')
+            ->setParameter('id', $id)
             ->getQuery()
             ->getOneOrNullResult()
         ;
+
+        if (isset($fields)) {
+            // Функция getOneOrNullResult() возвращает массив полей вместо объекта, если в select() явно перечислены поля
+            $request = new Request();
+            $request->setId($fields['id']);
+            $request->setCode($fields['code']);
+            $request->setName($fields['name']);
+            $request->setStatusDate($fields['statusDate']);
+            $request->setPrice($fields['price']);
+            $request->setQuantity($fields['quantity']);
+            $request->setFtFile($fields['ftFile']);
+            $request->setFnFile($fields['fnFile']);
+            return $request;
+        } else {
+            return null;
+        }
+    }
+
+
+    /**
+     * Возвращает файл заявки на закупку по id
+     */
+    public function findFileById($id): ?string
+    {
+        // Во фразе select нельзя исключить одно поле из сущности. 
+        // Можно только явно перечислить все поля кроме одного
+        $fields = $this->createQueryBuilder('p')
+            ->select('p.fdFile')
+            ->andWhere('p.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+
+        if (isset($fields)) {
+            $resource = $fields['fdFile'];
+            if (is_resource($resource))
+                return stream_get_contents($resource);
+            else
+                return null;            
+        } else {
+            return null;
+        }
     }
 }

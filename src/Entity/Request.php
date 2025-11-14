@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\RequestRepository;
+use Doctrine\DBAL\Types\BlobType;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use DateTime;
@@ -34,6 +35,16 @@ class Request
     #[ORM\Column]
     #[Assert\Positive(message: 'Количество должно быть больше нуля')]
     private ?int $quantity = null;
+
+    #[ORM\Column(type: 'blob')]
+    private $fdFile = null;
+
+    #[ORM\Column(length: 200)]
+    private ?string $ftFile = null;
+
+    #[ORM\Column(length: 200)]
+    private ?string $fnFile = null;
+
 
     public function getId(): ?int
     {
@@ -76,7 +87,7 @@ class Request
         return $this->statusDate;
     }
 
-    public function setStatusDate(DateTime $statusDate): static
+    public function setStatusDate(?DateTime $statusDate): static
     {
         $this->statusDate = $statusDate;
 
@@ -103,6 +114,42 @@ class Request
     public function setQuantity(int $quantity): static
     {
         $this->quantity = $quantity;
+
+        return $this;
+    }
+
+    //  public function getFdFile()
+    //  {
+    //      return $this->fdFile;
+    //  }
+
+    public function setFdFile($fdFile): static
+    {
+        $this->fdFile = $fdFile;
+
+        return $this;
+    }
+
+    public function getFtFile(): ?string
+    {
+        return $this->ftFile;
+    }
+
+    public function setFtFile(?string $ftFile): static
+    {
+        $this->ftFile = $ftFile;
+
+        return $this;
+    }
+
+    public function getFnFile(): ?string
+    {
+        return $this->fnFile;
+    }
+
+    public function setFnFile(?string $fnFile): static
+    {
+        $this->fnFile = $fnFile;
 
         return $this;
     }

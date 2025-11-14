@@ -9,10 +9,14 @@ use App\Repository\RequestRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Attribute\MapUploadedFile;
 
 final class RequestController extends AbstractController
 {
@@ -48,7 +52,7 @@ final class RequestController extends AbstractController
     #[Route('/request/{id}', methods: ['GET'], name: 'request_get', format: 'json')]
     public function getRequest(int $id, EntityManagerInterface $entityManager): JsonResponse
     {
-        $request = $entityManager->getRepository(Request::class)->find($id);
+        $request = $entityManager->getRepository(Request::class)->findById($id);
 
         if (!$request) {
             throw $this->createNotFoundException(
@@ -83,7 +87,7 @@ final class RequestController extends AbstractController
     #[Route('/request', methods: ['PUT'], name: 'request_change', format: 'json')]
     public function changeRequest(#[MapRequestPayload] Request $requestDto, EntityManagerInterface $entityManager): JsonResponse
     {
-        $request = $entityManager->getRepository(Request::class)->find($requestDto->getId());
+        $request = $entityManager->getRepository(Request::class)->findById($requestDto->getId());
 
         if (!$request) {
             throw $this->createNotFoundException(
@@ -107,7 +111,7 @@ final class RequestController extends AbstractController
     #[Route('/request/{id}', methods: ['DELETE'], name: 'request_delete', format: 'json')]
     public function deleteRequest(int $id, EntityManagerInterface $entityManager): JsonResponse
     {
-        $request = $entityManager->getRepository(Request::class)->find($id);
+        $request = $entityManager->getRepository(Request::class)->findById($id);
 
         if (!$request) {
             throw $this->createNotFoundException(
@@ -125,4 +129,63 @@ final class RequestController extends AbstractController
     }
 
 
+    #[Route('/request/{id}/file', methods: ['POST'], name: 'request_file_save', format: 'json')]
+    public function saveFile(
+        int $id,
+        #[MapUploadedFile] ?UploadedFile $file, 
+        EntityManagerInterface $entityManager
+    ): JsonResponse
+    {
+        $request = $entityManager->getRepository(Request::class)->find($id);
+
+        if (!$request) {
+            throw $this->createNotFoundException(
+                'Не найдена запись с id='.$id
+            );
+        }
+
+        $request->setFnFile($file->getClientOriginalName());
+        $request->setFtFile($file->getClientMimeType());
+        $request->setFdFile(file_get_contents($file->getPathname()));
+
+        // выполняем SQL-запрос (должен быть UPDATE)
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Файл загружен']);
+    }
+
+
+    #[Route('/request/{id}/file', methods: ['GET'], name: 'request_file_get', format: 'json')]
+    public function readFile(
+        int $id,
+        EntityManagerInterface $entityManager
+    ): Response
+    {
+        $request = $entityManager->getRepository(Request::class)->findById($id);
+
+        if (!$request) {
+            throw $this->createNotFoundException(
+                'Не найдена запись с id='.$id
+            );
+        }
+
+        // Содержимое файла в формате string (по другому не получилось)
+        $fileContent = $entityManager->getRepository(Request::class)->findFileById($id);
+
+        if (!$fileContent) {
+            throw $this->createNotFoundException(
+                'Запись с id='.$id.' не содержит файла'
+            );
+        }
+
+        return new Response(
+            $fileContent, 
+            Response::HTTP_OK, 
+            [
+                'Content-type' => $request->getFtFile(), 
+                'Content-Disposition' => 'attachment; filename="'.$request->getFnFile().'";',
+                'Content-length' => strlen($fileContent)
+            ]
+        );
+    }
 }
