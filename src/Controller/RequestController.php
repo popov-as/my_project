@@ -10,8 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -129,6 +127,9 @@ final class RequestController extends AbstractController
     }
 
 
+    /**
+     * Сохраняет файл заявки в ячейку таблицы БД
+     */
     #[Route('/request/{id}/file', methods: ['POST'], name: 'request_file_save', format: 'json')]
     public function saveFile(
         int $id,
@@ -155,6 +156,9 @@ final class RequestController extends AbstractController
     }
 
 
+    /**
+     * Выгружает файл заявки из ячейки таблицы БД
+     */
     #[Route('/request/{id}/file', methods: ['GET'], name: 'request_file_get', format: 'json')]
     public function readFile(
         int $id,

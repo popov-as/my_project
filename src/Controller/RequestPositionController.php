@@ -6,12 +6,16 @@ use App\Entity\RequestPosition;
 use App\Model\PageRequest;
 use App\Filter\RequestFilter;
 use App\Repository\RequestPositionRepository;
+use App\Service\FileStorage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\HttpKernel\Attribute\MapUploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final class RequestPositionController extends AbstractController
 {
@@ -121,4 +125,59 @@ final class RequestPositionController extends AbstractController
         return $this->json(['message' => 'Удаление выполнено']);
     }
 
+
+    /**
+     * Сохраняет файл позиции заявки в файловую систему
+     */
+    #[Route('/request/position/{id}/file', methods: ['POST'], name: 'request_position_file_save', format: 'json')]
+    public function saveFile(
+        int $id,
+        #[MapUploadedFile] ?UploadedFile $file, 
+        EntityManagerInterface $entityManager,
+        FileStorage $fileStorage
+    ): JsonResponse
+    {
+        $requestPosition = $entityManager->getRepository(RequestPosition::class)->find($id);
+
+        if (!$requestPosition) {
+            throw $this->createNotFoundException(
+                'Не найдена запись с id='.$id
+            );
+        }
+
+        // TODO Удалить или заменить старый файл в хранилище (если он был загружен)
+
+        $fileLink = $fileStorage->saveFile($file);
+
+        $requestPosition->setFnFile($file->getClientOriginalName());
+        $requestPosition->setFtFile($file->getClientMimeType());
+        $requestPosition->setFlFile($fileLink);
+
+        // выполняем SQL-запрос (должен быть UPDATE)
+        $entityManager->flush();
+
+        return $this->json(['message' => 'Файл загружен']);
+    }
+
+
+    /**
+     * Выгружает файл позиции заявки из файловой системы
+     */
+    #[Route('/request/position/{id}/file', methods: ['GET'], name: 'request_position_file_get', format: 'json')]
+    public function readFile(
+        int $id,
+        EntityManagerInterface $entityManager,
+        FileStorage $fileStorage
+    ): BinaryFileResponse
+    {
+        $requestPosition = $entityManager->getRepository(RequestPosition::class)->find($id);
+
+        if (!$requestPosition) {
+            throw $this->createNotFoundException(
+                'Не найдена запись с id='.$id
+            );
+        }
+
+        return $fileStorage->getFile($requestPosition->getFlFile(),  $requestPosition->getFnFile());
+    }
 }

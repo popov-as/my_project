@@ -39,6 +39,15 @@ class RequestPosition
     #[ORM\Column]
     private ?float $totalPrice = null;
 
+    #[ORM\Column(length: 200)]
+    private ?string $flFile = null;
+
+    #[ORM\Column(length: 200)]
+    private ?string $ftFile = null;
+
+    #[ORM\Column(length: 200)]
+    private ?string $fnFile = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -119,6 +128,42 @@ class RequestPosition
     public function setTotalPrice(float $totalPrice): static
     {
         $this->totalPrice = $totalPrice;
+
+        return $this;
+    }
+
+     public function getFlFile(): ?string
+     {
+         return $this->flFile;
+     }
+
+    public function setFlFile($flFile): static
+    {
+        $this->flFile = $flFile;
+
+        return $this;
+    }
+
+    public function getFtFile(): ?string
+    {
+        return $this->ftFile;
+    }
+
+    public function setFtFile(?string $ftFile): static
+    {
+        $this->ftFile = $ftFile;
+
+        return $this;
+    }
+
+    public function getFnFile(): ?string
+    {
+        return $this->fnFile;
+    }
+
+    public function setFnFile(?string $fnFile): static
+    {
+        $this->fnFile = $fnFile;
 
         return $this;
     }
