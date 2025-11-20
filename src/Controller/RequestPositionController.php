@@ -49,9 +49,7 @@ final class RequestPositionController extends AbstractController
         $requestPosition = $entityManager->getRepository(RequestPosition::class)->find($id);
 
         if (!$requestPosition) {
-            throw $this->createNotFoundException(
-                'Не найдена запись с id='.$id
-            );
+            throw $this->createNotFoundException('Не найдена запись с id='.$id);
         }
 
         return $this->json($requestPosition);
@@ -86,9 +84,7 @@ final class RequestPositionController extends AbstractController
         $requestPosition = $entityManager->getRepository(RequestPosition::class)->find($requestPositionDto->getId());
 
         if (!$requestPosition) {
-            throw $this->createNotFoundException(
-                'Не найдена запись с id='.$requestPositionDto->getId()
-            );
+            throw $this->createNotFoundException('Не найдена запись с id='.$requestPositionDto->getId());
         }
 
         $requestPosition->setName($requestPositionDto->getName());
@@ -111,9 +107,7 @@ final class RequestPositionController extends AbstractController
         $requestPosition = $entityManager->getRepository(RequestPosition::class)->find($id);
 
         if (!$requestPosition) {
-            throw $this->createNotFoundException(
-                'Не найдена запись с id='.$id
-            );
+            throw $this->createNotFoundException('Не найдена запись с id='.$id);
         }
 
         // сообщаем Doctrine, что мы хотим удалить Позицию заявки на закупку (пока без SQL-запросов)
@@ -140,13 +134,13 @@ final class RequestPositionController extends AbstractController
         $requestPosition = $entityManager->getRepository(RequestPosition::class)->find($id);
 
         if (!$requestPosition) {
-            throw $this->createNotFoundException(
-                'Не найдена запись с id='.$id
-            );
+            throw $this->createNotFoundException('Не найдена запись с id='.$id);
         }
 
-        // TODO Удалить или заменить старый файл в хранилище (если он был загружен)
+        // Запоминаем ссылку на старый файл
+        $oldFileLink = $requestPosition->getFlFile();
 
+        // Сохраняем новый файл в файловую систему
         $fileLink = $fileStorage->saveFile($file);
 
         $requestPosition->setFnFile($file->getClientOriginalName());
@@ -156,7 +150,43 @@ final class RequestPositionController extends AbstractController
         // выполняем SQL-запрос (должен быть UPDATE)
         $entityManager->flush();
 
+        // Удаляем старый файл из файловой системы
+        $fileStorage->deleteFile($oldFileLink);
+
         return $this->json(['message' => 'Файл загружен']);
+    }
+
+
+    /**
+     * Удаляет файл позиции заявки из файловой системы
+     */
+    #[Route('/request/position/{id}/file', methods: ['DELETE'], name: 'request_position_file_delete', format: 'json')]
+    public function deleteFile(
+        int $id,
+        EntityManagerInterface $entityManager,
+        FileStorage $fileStorage
+    ): JsonResponse
+    {
+        $requestPosition = $entityManager->getRepository(RequestPosition::class)->find($id);
+
+        if (!$requestPosition) {
+            throw $this->createNotFoundException('Не найдена запись с id='.$id);
+        }
+
+        // Запоминаем ссылку на старый файл
+        $oldFileLink = $requestPosition->getFlFile();
+
+        $requestPosition->setFnFile(null);
+        $requestPosition->setFtFile(null);
+        $requestPosition->setFlFile(null);
+
+        // выполняем SQL-запрос (должен быть UPDATE)
+        $entityManager->flush();
+
+        // Удаляем старый файл из файловой системы
+        $fileStorage->deleteFile($oldFileLink);
+
+        return $this->json(['message' => 'Файл удален']);
     }
 
 
@@ -173,9 +203,11 @@ final class RequestPositionController extends AbstractController
         $requestPosition = $entityManager->getRepository(RequestPosition::class)->find($id);
 
         if (!$requestPosition) {
-            throw $this->createNotFoundException(
-                'Не найдена запись с id='.$id
-            );
+            throw $this->createNotFoundException('Не найдена запись с id='.$id);
+        }
+
+        if (!$requestPosition->getFlFile()) {
+            throw $this->createNotFoundException('Запись не содержит файл');
         }
 
         return $fileStorage->getFile($requestPosition->getFlFile(),  $requestPosition->getFnFile());

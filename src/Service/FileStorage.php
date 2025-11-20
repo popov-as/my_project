@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\Filesystem\Filesystem;
 
 class FileStorage
 {
@@ -50,6 +51,20 @@ class FileStorage
         );
 
         return $response;
+    }
+
+
+    public function deleteFile(?string $fileLink): void
+    {
+        if (isset($fileLink)) {
+            $filesystem = new Filesystem();
+
+            $filePath = $this->getDirectory() . '/' . $fileLink;
+
+            if ($filesystem->exists($filePath)) {
+                $filesystem->remove($filePath);
+            }
+        }
     }
 
 }
