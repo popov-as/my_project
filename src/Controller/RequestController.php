@@ -3,18 +3,22 @@
 namespace App\Controller;
 
 use App\Entity\Request;
+use App\Entity\RequestPosition;
 use App\Model\PageRequest;
 use App\Filter\RequestFilter;
+use App\Service\RequestExportService;
 use App\Repository\RequestRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapUploadedFile;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 final class RequestController extends AbstractController
 {
@@ -53,9 +57,7 @@ final class RequestController extends AbstractController
         $request = $entityManager->getRepository(Request::class)->findById($id);
 
         if (!$request) {
-            throw $this->createNotFoundException(
-                'Не найдена запись с id='.$id
-            );
+            throw $this->createNotFoundException('Не найдена запись с id='.$id);
         }
 
         return $this->json($request);
@@ -88,9 +90,7 @@ final class RequestController extends AbstractController
         $request = $entityManager->getRepository(Request::class)->findById($requestDto->getId());
 
         if (!$request) {
-            throw $this->createNotFoundException(
-                'Не найдена запись с id='.$requestDto->getId()
-            );
+            throw $this->createNotFoundException('Не найдена запись с id='.$requestDto->getId());
         }
 
         $request->setCode($requestDto->getCode());
@@ -112,9 +112,7 @@ final class RequestController extends AbstractController
         $request = $entityManager->getRepository(Request::class)->findById($id);
 
         if (!$request) {
-            throw $this->createNotFoundException(
-                'Не найдена запись с id='.$id
-            );
+            throw $this->createNotFoundException('Не найдена запись с id='.$id);
         }
 
         // сообщаем Doctrine, что мы хотим удалить Заявку на закупку (пока без SQL-запросов)
@@ -140,9 +138,7 @@ final class RequestController extends AbstractController
         $request = $entityManager->getRepository(Request::class)->find($id);
 
         if (!$request) {
-            throw $this->createNotFoundException(
-                'Не найдена запись с id='.$id
-            );
+            throw $this->createNotFoundException('Не найдена запись с id='.$id);
         }
 
         $request->setFnFile($file->getClientOriginalName());
@@ -177,9 +173,7 @@ final class RequestController extends AbstractController
         $fileContent = $entityManager->getRepository(Request::class)->findFileById($id);
 
         if (!$fileContent) {
-            throw $this->createNotFoundException(
-                'Запись с id='.$id.' не содержит файла'
-            );
+            throw $this->createNotFoundException('Запись с id='.$id.' не содержит файл');
         }
 
         return new Response(
@@ -192,4 +186,39 @@ final class RequestController extends AbstractController
             ]
         );
     }
+
+
+    /**
+     * Выгружает отчет по заявке в Excel
+     */
+    #[Route('/request/{id}/excel', methods: ['GET'], name: 'request_excel', format: 'json')]
+    public function exportExcel(
+        int $id,
+        EntityManagerInterface $entityManager,
+        RequestExportService $exportService
+    ): Response
+    {
+        $request = $entityManager->getRepository(Request::class)->findById($id);
+
+        if (!$request) {
+            throw $this->createNotFoundException('Не найдена запись с id='.$id);
+        }
+
+        // Список позиций
+        $positions = $entityManager->getRepository(RequestPosition::class)->findByRequestId($id);
+
+        // Генерируем содержимое Excel-файла
+        $spreadsheet = $exportService->generateExcel($request, $positions);
+
+        // Класс для выгрузки в Excel
+        $writer = new Xlsx($spreadsheet);
+
+        $response = new StreamedResponse(function () use ($writer) {
+            $writer->save('php://output');
+        });
+
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment;filename="export.xlsx"');
+
+        return $response;    }
 }

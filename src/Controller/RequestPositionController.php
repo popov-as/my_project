@@ -207,7 +207,7 @@ final class RequestPositionController extends AbstractController
         }
 
         if (!$requestPosition->getFlFile()) {
-            throw $this->createNotFoundException('Запись не содержит файл');
+            throw $this->createNotFoundException('Запись с id='.$id.' не содержит файл');
         }
 
         return $fileStorage->getFile($requestPosition->getFlFile(),  $requestPosition->getFnFile());
