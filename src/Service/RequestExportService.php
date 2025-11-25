@@ -3,6 +3,7 @@ namespace App\Service;
 
 use App\Entity\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -48,6 +49,8 @@ class RequestExportService
         $sheet->setCellValue([6, $row], 'Сумма');
         // Стиль для всей шапки
         $sheet->getStyle([1, $row, 6, $row])->applyFromArray($headerStyle);
+        // Автоматическая ширина столбцов
+        $this->setColumnAutoSize($sheet, $row); 
         $row = $row + 1;
 
         // Печать позиций заявки
@@ -62,6 +65,22 @@ class RequestExportService
         }
 
         return $spreadsheet;
+    }
+
+
+    /**
+     * Устанавливает автоматическую ширину для всех столбцов таблицы позиций. 
+     * Ориентируется на набор столбцов в строке $row
+     */
+    private function setColumnAutoSize(Worksheet $sheet, int $row): void
+    {
+        $cellIterator = $sheet->getRowIterator($row)->current()->getCellIterator();
+        $cellIterator->setIterateOnlyExistingCells(true);
+
+        // Итератор для столбцов
+        foreach ($cellIterator as $cell) {
+            $sheet->getColumnDimension($cell->getColumn())->setAutoSize(true);
+        }
     }
 
 
