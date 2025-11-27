@@ -6,6 +6,8 @@ use App\Entity\Request;
 use App\Entity\RequestPosition;
 use App\Model\PageRequest;
 use App\Filter\RequestFilter;
+use App\Service\FileStorage;
+use App\Service\RequestImportService;
 use App\Service\RequestExportService;
 use App\Repository\RequestRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,6 +21,7 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapUploadedFile;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Exception;
 
 final class RequestController extends AbstractController
 {
@@ -77,7 +80,7 @@ final class RequestController extends AbstractController
         // сообщаем Doctrine, что мы хотим (в итоге) сохранить Заявку на закупку (пока без SQL-запросов)
         $entityManager->persist($request);
 
-        // выполняем SQL-запросы (например, запрос INSERT)
+        // выполняем SQL-запросы (в данном случае INSERT)
         $entityManager->flush();
 
         return $this->json($request);
@@ -189,9 +192,9 @@ final class RequestController extends AbstractController
 
 
     /**
-     * Выгружает отчет по заявке в Excel
+     * Выгружает отчет по заявке на закупку в Excel
      */
-    #[Route('/request/{id}/excel', methods: ['GET'], name: 'request_excel', format: 'json')]
+    #[Route('/request/{id}/excel', methods: ['GET'], name: 'get_request_excel', format: 'json')]
     public function exportExcel(
         int $id,
         EntityManagerInterface $entityManager,
@@ -220,5 +223,33 @@ final class RequestController extends AbstractController
         $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $response->headers->set('Content-Disposition', 'attachment;filename="export.xlsx"');
 
-        return $response;    }
+        return $response;
+    }
+
+
+    /**
+     * Загружает заявку на закупку из Excel
+     */
+    #[Route('/request/excel', methods: ['POST'], name: 'post_request_excel', format: 'json')]
+    public function importExcel(
+        #[MapUploadedFile] ?UploadedFile $file,
+        FileStorage $fileStorage,
+        RequestImportService $importService
+    ): Response
+    {
+        // Сохраняем файл в файловую систему,
+        // т.к. библиотека для работы с Excel умеет загружать данные только из файловой системы
+        $filename = $fileStorage->saveFile($file);
+        $filePath = $fileStorage->getFilePath($filename);
+
+        // Загружаем заявку на закупку из Excel-файла
+        try {
+            $request = $importService->loadRequestFromExcel($filePath);
+        } finally {
+            // Удаляем файл из файловой системы
+            $fileStorage->deleteFile($filename);
+        }
+     
+        return $this->json($request->getId());
+    }
 }

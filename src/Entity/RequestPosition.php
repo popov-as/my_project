@@ -89,7 +89,7 @@ class RequestPosition
         return $this->deliveryDate;
     }
 
-    public function setDeliveryDate(DateTime $deliveryDate): static
+    public function setDeliveryDate(?DateTime $deliveryDate): static
     {
         $this->deliveryDate = $deliveryDate;
 
@@ -101,7 +101,7 @@ class RequestPosition
         return $this->price;
     }
 
-    public function setPrice(float $price): static
+    public function setPrice(?float $price): static
     {
         $this->price = $price;
 
@@ -113,7 +113,7 @@ class RequestPosition
         return $this->quantity;
     }
 
-    public function setQuantity(int $quantity): static
+    public function setQuantity(?int $quantity): static
     {
         $this->quantity = $quantity;
 
@@ -125,7 +125,7 @@ class RequestPosition
         return $this->totalPrice;
     }
 
-    public function setTotalPrice(float $totalPrice): static
+    public function setTotalPrice(?float $totalPrice): static
     {
         $this->totalPrice = $totalPrice;
 

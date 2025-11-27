@@ -10,7 +10,7 @@ class DataPaginator
 {
     public function __construct(
         public QueryBuilder $qb, 
-        public PageRequest $pageRequest, 
+        public PageRequest $pageRequest 
     ) {
     }
 

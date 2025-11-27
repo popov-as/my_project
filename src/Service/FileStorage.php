@@ -24,7 +24,18 @@ class FileStorage
         return $this->projectDir . FileStorage::UPLOAD_DIRECTORY;
     }
 
+    /**
+     * Получает полный путь к файлу по его имени
+     */
+    public function getFilePath(string $filename): string
+    {
+        return $this->getDirectory() . '/' . $filename;
+    }
 
+    /**
+     * Сохраняет файл в файловую систему.
+     * Возвращает системное имя файла (относительный путь)
+     */
     public function saveFile(UploadedFile $file): string
     {
         $filename = uniqid() . '.' . $file->getClientOriginalExtension();
@@ -41,25 +52,30 @@ class FileStorage
     }
 
     
-    public function getFile(string $fileLink, string $fileName): BinaryFileResponse
+    /**
+     * Возвращает файл в виде HTTP-ответа
+     */
+    public function getFileResponse(string $filename, string $originalFileName): BinaryFileResponse
     {
-        $response = new BinaryFileResponse($this->getDirectory() . '/' . $fileLink);
+        $response = new BinaryFileResponse($this->getFilePath($filename));
 
         $response->setContentDisposition(
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            $fileName
+            $originalFileName
         );
 
         return $response;
     }
 
-
-    public function deleteFile(?string $fileLink): void
+    /**
+     * Удаляет файл из файловой системы
+     */
+    public function deleteFile(?string $filename): void
     {
-        if (isset($fileLink)) {
+        if (isset($filename)) {
             $filesystem = new Filesystem();
 
-            $filePath = $this->getDirectory() . '/' . $fileLink;
+            $filePath = $this->getFilePath($filename);
 
             if ($filesystem->exists($filePath)) {
                 $filesystem->remove($filePath);
