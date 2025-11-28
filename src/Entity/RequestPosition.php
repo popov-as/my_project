@@ -167,4 +167,9 @@ class RequestPosition
 
         return $this;
     }
+
+    public function calcTotalPrice(): void
+    {
+        $this->totalPrice = $this->price * $this->quantity;
+    }
 }

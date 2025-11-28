@@ -43,7 +43,7 @@ class RequestImportService
             $position->setDeliveryDate($this->getDateTime($sheet->getCell([3, $rowNum])));
             $position->setPrice($sheet->getCell([4, $rowNum])->getValue());
             $position->setQuantity($sheet->getCell([5, $rowNum])->getValue());
-            // TODO Вычислять totalPrice
+            $position->calcTotalPrice();
 
             // сообщаем Doctrine, что мы хотим (в итоге) сохранить Позицию заявки на закупку (пока без SQL-запросов)
             $this->entityManager->persist($position);

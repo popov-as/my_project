@@ -65,8 +65,7 @@ final class RequestPositionController extends AbstractController
         $requestPosition->setDeliveryDate($requestPositionDto->getDeliveryDate());
         $requestPosition->setPrice($requestPositionDto->getPrice());
         $requestPosition->setQuantity($requestPositionDto->getQuantity());
-        // TODO Вычислять totalPrice
-        $requestPosition->setTotalPrice($requestPositionDto->getTotalPrice());
+        $requestPosition->calcTotalPrice();
 
         // сообщаем Doctrine, что мы хотим (в итоге) сохранить Позицию заявки на закупку (пока без SQL-запросов)
         $entityManager->persist($requestPosition);
@@ -91,8 +90,7 @@ final class RequestPositionController extends AbstractController
         $requestPosition->setDeliveryDate($requestPositionDto->getDeliveryDate());
         $requestPosition->setPrice($requestPositionDto->getPrice());
         $requestPosition->setQuantity($requestPositionDto->getQuantity());
-        // TODO Вычислять totalPrice
-        $requestPosition->setTotalPrice($requestPositionDto->getTotalPrice());
+        $requestPosition->calcTotalPrice();
 
         // выполняем SQL-запрос (должен быть UPDATE)
         $entityManager->flush();
